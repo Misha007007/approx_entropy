@@ -1,0 +1,15 @@
+[package]
+name = "entropy_est"
+version = "0.1.0"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+noisy_float = "0.2.0"
+text_io = "0.1.9"
+rand = "0.8.4"
+random_choice = "0.3.2"
+transpose = "0.2.1"
+nalgebra = "0.29.0"
+float_eq = "0.6.1"
