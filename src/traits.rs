@@ -4,18 +4,14 @@ use std::error::Error;
 pub trait SamplingMethod {
     type DegreeError: Error;
     type NumGroupsError: Error;
-
     fn degree(&self) -> usize;
     fn set_degree(&mut self, degree: usize) -> Result<&mut Self, Self::DegreeError>;
-
     fn set_num_groups(&mut self, num_groups: usize) -> Result<&mut Self, Self::NumGroupsError>;
-
     fn set_unnorm_distr(&mut self, unnorm_distr: &[usize]) -> &mut Self;
 
     fn sample_entropy(&mut self) -> DVector<f64>;
     fn size_subsamples(&self) -> Vec<usize>;
     fn samples_rep(&self) -> Vec<usize>;
-
     fn total_samples(&self) -> usize {
         self.samples_rep().iter().sum()
     }
