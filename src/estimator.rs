@@ -127,8 +127,9 @@ mod tests {
     use super::*;
     use test_case::test_case;
 
+    #[test_case(&[8]; "one_sample")]
     #[test_case(&[1, 2, 3, 4, 5, 6]; "&[usize; N]")]
-    #[test_case(vec!['a', 'b', 'c']; "Vec<T>")]
+    #[test_case(vec!['a', 'b', 'c', 'd', 'd', 'e', 'e', 'e']; "Vec<T>")]
     fn from<T>(source: T)
     where
         Estimator<Bootstrap<ThreadRng>>: From<T>,

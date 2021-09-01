@@ -6,11 +6,20 @@ use crate::{traits::SamplingMethod, utils::count_dup, NaiveEstimator};
 
 #[derive(Debug)]
 pub struct Bootstrap<R> {
-    sample_size: usize,
     num_groups: usize,
     degree: usize,
     unnorm_distr: Vec<usize>,
     rng: R,
+}
+
+#[derive(Error, Debug)]
+pub enum ConstructionError {
+    #[error(
+        "Failed construction. There are too few samples (or the number of groups is too big)."
+    )]
+    TooFewSamples(#[from] TooFewSamples),
+    #[error("Failed construction. There are too few number of groups (or the degree is too big).")]
+    LowNumGroups(#[from] LowNumGroups),
 }
 
 impl<R> Bootstrap<R>
@@ -21,30 +30,34 @@ where
     ///
     /// # Errors
     ///
-    /// If the number of groups is less or equal than the degree.
+    /// If the number of groups is less or equal than the degree;
+    /// or if the total number of available samples is too low (for the desired number of groups).
     pub fn new(
         unnorm_distr: &[usize],
         num_groups: usize,
         degree: usize,
         rng: R,
-    ) -> Result<Self, LowNumGroups> {
+    ) -> Result<Self, ConstructionError> {
         if num_groups > degree {
-            Ok(Bootstrap::new_unchecked(
-                unnorm_distr,
-                num_groups,
-                degree,
-                rng,
-            ))
+            let available_samples: usize = unnorm_distr.iter().sum();
+            if available_samples >= 1 << num_groups {
+                Ok(Bootstrap::new_unchecked(
+                    unnorm_distr,
+                    num_groups,
+                    degree,
+                    rng,
+                ))
+            } else {
+                Err(TooFewSamples)?
+            }
         } else {
-            Err(LowNumGroups)
+            Err(LowNumGroups)?
         }
     }
 
     /// Construct a new `Bootstrap`.
     pub fn new_unchecked(unnorm_distr: &[usize], num_groups: usize, degree: usize, rng: R) -> Self {
-        let sample_size = unnorm_distr.iter().sum();
         Bootstrap {
-            sample_size,
             num_groups,
             degree,
             unnorm_distr: unnorm_distr.to_vec(),
@@ -61,12 +74,17 @@ pub struct LowNumGroups;
 #[error("Invalid number of groups: the degree is too high.")]
 pub struct HighDegree;
 
+#[derive(Error, Debug)]
+#[error("Invalid unnormalized distribution: the total number of samples is too low.")]
+pub struct TooFewSamples;
+
 impl<R> SamplingMethod for Bootstrap<R>
 where
     R: Rng,
 {
     type DegreeError = HighDegree;
     type NumGroupsError = LowNumGroups;
+    type UnnormDistrError = TooFewSamples;
 
     fn degree(&self) -> usize {
         self.degree
@@ -92,9 +110,22 @@ where
         }
     }
 
-    fn set_unnorm_distr(&mut self, unnorm_distr: &[usize]) -> &mut Self {
-        self.unnorm_distr = unnorm_distr.to_vec();
-        self
+    /// Change the unnormalized distribution.
+    ///
+    /// # Errors
+    ///
+    /// If there are too few samples: there must be at least `2^{num_groups}`.
+    fn set_unnorm_distr(
+        &mut self,
+        unnorm_distr: &[usize],
+    ) -> Result<&mut Self, Self::UnnormDistrError> {
+        let available_samples: usize = unnorm_distr.iter().sum();
+        if available_samples >= 1 << self.num_groups {
+            self.unnorm_distr = unnorm_distr.to_vec();
+            Ok(self)
+        } else {
+            Err(TooFewSamples)
+        }
     }
 
     fn sample_entropy(&mut self) -> DVector<f64> {
@@ -128,8 +159,9 @@ where
         y
     }
     fn size_subsamples(&self) -> Vec<usize> {
+        let available_samples: usize = self.unnorm_distr.iter().sum();
         (0..self.num_groups)
-            .map(|i| self.sample_size >> (i + 1))
+            .map(|i| available_samples >> (i + 1))
             .collect()
     }
     fn samples_rep(&self) -> Vec<usize> {
