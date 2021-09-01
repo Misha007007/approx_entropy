@@ -13,6 +13,15 @@ const DEFAULT_DEGREE: usize = 2;
 /// Entropy estimator
 ///
 /// This is a wrapper around a concrete sampling method.
+///
+/// # Examples
+///
+/// Quick estimation.
+/// ```
+/// # use approx_entropy::Estimator;
+/// let mut estimator = Estimator::from(&[1, 2, 3, 4, 5, 6]);
+/// println!("Entropy estimation: {}", estimator.entropy());
+/// ```
 #[derive(Debug, PartialEq)]
 pub struct Estimator<M> {
     sampling_method: M,

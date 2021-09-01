@@ -1,5 +1,5 @@
 [package]
-name = "entropy_est"
+name = "approx_entropy"
 version = "0.1.0"
 edition = "2018"
 
@@ -13,3 +13,4 @@ thiserror = "1.0.28"
 [dev-dependencies]
 test-case = "1.2.0"
 float_eq = "0.6.1"
+rand_pcg = "0.3.1"

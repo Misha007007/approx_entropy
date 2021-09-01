@@ -20,15 +20,18 @@ pub trait SamplingMethod {
         self.samples_rep().iter().sum()
     }
     fn sample_entropy_matrix(&self) -> DMatrix<f64> {
-        let mut vec_x = Vec::new();
         let size_subsamples = self.size_subsamples();
-        let simple_x = DMatrix::from_fn(size_subsamples.len(), self.degree() + 1, |r, c| {
+        let samples_rep = self.samples_rep();
+        let undup_x = DMatrix::from_fn(size_subsamples.len(), self.degree() + 1, |r, c| {
             size_subsamples[r] as f64 / (size_subsamples[r].pow(c as u32)) as f64
         });
 
+        let mut vec_x = Vec::new();
         for col in 0..self.degree() + 1 {
-            for row in 0..size_subsamples.len() {
-                vec_x.push(simple_x[(row, col)]);
+            for undup_row in 0..size_subsamples.len() {
+                for _ in 0..samples_rep[undup_row] {
+                    vec_x.push(undup_x[(undup_row, col)]);
+                }
             }
         }
         DMatrix::<f64>::from_vec(self.total_samples(), self.degree() + 1, vec_x)

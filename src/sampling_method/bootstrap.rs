@@ -98,6 +98,7 @@ where
     }
 
     fn sample_entropy(&mut self) -> DVector<f64> {
+        println!("Sampling entropy!");
         let mut y = DVector::<f64>::from_element(self.total_samples(), 0.0);
         let sample_long = {
             let mut vec = Vec::<usize>::new();
@@ -128,7 +129,7 @@ where
     }
     fn size_subsamples(&self) -> Vec<usize> {
         (0..self.num_groups)
-            .map(|i| self.sample_size >> i + 1)
+            .map(|i| self.sample_size >> (i + 1))
             .collect()
     }
     fn samples_rep(&self) -> Vec<usize> {
@@ -139,6 +140,8 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use float_eq::assert_float_eq;
+    use nalgebra::dmatrix;
 
     #[test]
     fn size_subsamples() {
@@ -168,5 +171,31 @@ mod tests {
         let bootstrap = Bootstrap::new(&[1, 2, 3, 4, 5, 6], num_groups, degree, rng).unwrap();
 
         assert_eq!(7, bootstrap.total_samples());
+    }
+
+    #[test]
+    fn sample_entropy_matrix() {
+        let num_groups = 3;
+        let degree = 2;
+        let rng = rand::thread_rng();
+        let bootstrap = Bootstrap::new(&[1, 2, 3, 4, 5, 6], num_groups, degree, rng).unwrap();
+
+        let expected = dmatrix![
+            10.0, 1.0, 0.1;
+            5.0, 1.0, 0.2;
+            5.0, 1.0, 0.2;
+            2.0, 1.0, 0.5;
+            2.0, 1.0, 0.5;
+            2.0, 1.0, 0.5;
+            2.0, 1.0, 0.5
+        ];
+
+        for (value, expected_value) in bootstrap
+            .sample_entropy_matrix()
+            .iter()
+            .zip(expected.iter())
+        {
+            assert_float_eq!(value, expected_value, abs <= 1e-6);
+        }
     }
 }
