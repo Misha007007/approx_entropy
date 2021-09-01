@@ -65,8 +65,8 @@ impl<R> SamplingMethod for Bootstrap<R>
 where
     R: Rng,
 {
-    type DegreeError = LowNumGroups;
-    type NumGroupsError = HighDegree;
+    type DegreeError = HighDegree;
+    type NumGroupsError = LowNumGroups;
 
     fn degree(&self) -> usize {
         self.degree
@@ -79,7 +79,7 @@ where
             self.num_groups = num_groups;
             Ok(self)
         } else {
-            Err(HighDegree)
+            Err(LowNumGroups)
         }
     }
 
@@ -88,7 +88,7 @@ where
             self.degree = degree;
             Ok(self)
         } else {
-            Err(LowNumGroups)
+            Err(HighDegree)
         }
     }
 

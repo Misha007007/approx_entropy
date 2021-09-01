@@ -1,1 +1,3 @@
 - Check test folder cases
+- bootstrap implementation errors (they are switched)
+- set_unnorm_distr can fail
