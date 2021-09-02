@@ -3,7 +3,7 @@ use float_eq::assert_float_eq;
 use rand::rngs::ThreadRng;
 use test_case::test_case;
 
-#[test_case(&[1, 2, 3, 4, 5, 6], -0.144405662; "increasing")]
+#[test_case([1, 2, 3, 4, 5, 6], -0.144405662; "increasing")]
 #[test_case(vec!['a', 'b', 'c', 'd', 'd', 'e', 'e', 'e'], -0.144405662; "uniform_3")]
 fn entropy<T>(source: T, expected: f64)
 where
