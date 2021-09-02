@@ -129,7 +129,6 @@ where
     }
 
     fn sample_entropy(&mut self) -> DVector<f64> {
-        println!("Sampling entropy!");
         let mut y = DVector::<f64>::from_element(self.total_samples(), 0.0);
         let sample_long = {
             let mut vec = Vec::<usize>::new();
