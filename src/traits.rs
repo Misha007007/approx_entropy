@@ -5,15 +5,21 @@ pub trait SamplingMethod {
     type DegreeError: Error;
     type NumGroupsError: Error;
     type UnnormDistrError: Error;
+    /// Returns the degree of the polynomial used to fit the naive entropy estimations.
     fn degree(&self) -> usize;
+    /// Change the degree of the polynomial used to fit the naive entropy estimations.
     fn set_degree(&mut self, degree: usize) -> Result<&mut Self, Self::DegreeError>;
+    /// Change the number of groups.
     fn set_num_groups(&mut self, num_groups: usize) -> Result<&mut Self, Self::NumGroupsError>;
+    /// Change the unnormalized distribution from which subsamples will be taken.
     fn set_unnorm_distr(
         &mut self,
         unnorm_distr: &[usize],
     ) -> Result<&mut Self, Self::UnnormDistrError>;
 
+    /// Returns all naive entropy estimations used for fitting a polynomial.
     fn sample_entropy(&mut self) -> DVector<f64>;
+
     /// Size of the subsamples, for each group.
     ///
     /// The first entry corresponds to the number of subsamples
@@ -40,6 +46,7 @@ pub trait SamplingMethod {
     fn total_samples(&self) -> usize {
         self.samples_rep().iter().sum()
     }
+    /// Returns a matrix used for fitting a polynomial to the values computed by `sample_entropy`.
     fn sample_entropy_matrix(&self) -> DMatrix<f64> {
         let size_subsamples = self.size_subsamples();
         let samples_rep = self.samples_rep();

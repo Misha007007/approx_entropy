@@ -65,9 +65,9 @@ where
     }
 }
 
-/// # Sampling Method
+/// # Getters
 ///
-/// Methods related to the underlying sampling method
+/// Get the underlying sampling method.
 impl<M> Estimator<M>
 where
     M: SamplingMethod,
@@ -75,6 +75,11 @@ where
     /// Returns the underlying sampling method.
     pub fn sampling_method(&self) -> &M {
         &self.sampling_method
+    }
+
+    /// Returns the underlying sampling method.
+    pub fn sampling_method_mut(&mut self) -> &mut M {
+        &mut self.sampling_method
     }
 }
 
