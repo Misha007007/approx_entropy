@@ -28,10 +28,17 @@ where
 {
     /// Construct a new `Bootstrap`.
     ///
+    /// Notice that `unnorm_distr` must correspond to an unnormalized distribution
+    /// where each entry corresponds to the number of times a specific value occured.
+    /// If you need to transform a vector of samples to an unnormalized distribution,
+    /// check out [`count_dup`].
+    ///
     /// # Errors
     ///
     /// If the number of groups is less or equal than the degree;
     /// or if the total number of available samples is too low (for the desired number of groups).
+    ///
+    /// [`count_dup`]: fn.count_dup.html
     pub fn new(
         unnorm_distr: &[usize],
         num_groups: usize,

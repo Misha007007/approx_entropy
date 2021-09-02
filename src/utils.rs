@@ -1,12 +1,22 @@
 use std::{collections::HashMap, hash::Hash};
 
 /// Returns a vector containing the number of repetitions
-/// of each distinct element in `samples` (without repetition).
+/// of each distinct element in `samples`.
 ///
 /// # Remarks
 ///
-/// The correspondance between the original element and its repetition is lost.
-/// Also, there is no guarantee on the order of the output.
+/// There is no guarantee on the order of the output.
+/// In particular, the correspondance between the original element
+/// and its number of occurrances is lost.
+///
+/// # Examples
+///
+/// From samples that contain twice all elements.
+/// ```
+/// # use approx_entropy::count_dup;
+/// let samples = ['a', 'b', 'c', 'c', 'a', 'b'];
+/// assert_eq!(count_dup(&samples), vec![2, 2, 2]);
+/// ```
 pub fn count_dup<T>(samples: &[T]) -> Vec<usize>
 where
     T: Hash + Eq + Clone,
