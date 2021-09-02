@@ -56,7 +56,7 @@ where
     ///
     /// If there are numerical instabilities.
     pub fn entropy(&mut self) -> f64 {
-        let y = self.sampling_method.sample_entropy();
+        let y = self.sampling_method.naive_entropies();
 
         let x = self.sampling_method.sample_entropy_matrix();
 

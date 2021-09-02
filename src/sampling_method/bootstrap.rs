@@ -149,7 +149,7 @@ where
         (0..self.num_groups()).map(|i| 1 << i).collect()
     }
 
-    fn sample_entropy(&mut self) -> DVector<f64> {
+    fn naive_entropies(&mut self) -> DVector<f64> {
         let mut y = DVector::<f64>::from_element(self.total_samples(), 0.0);
         let sample_long = {
             let mut vec = Vec::<usize>::new();

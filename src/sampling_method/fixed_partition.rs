@@ -164,7 +164,7 @@ impl SamplingMethod for FixedPartition {
         self.samples_rep.clone()
     }
 
-    fn sample_entropy(&mut self) -> DVector<f64> {
+    fn naive_entropies(&mut self) -> DVector<f64> {
         let mut y = DVector::<f64>::from_element(self.total_samples(), 0.0);
         let mut sample_long = self.samples.clone();
 
@@ -247,7 +247,7 @@ mod tests {
     ) {
         let mut fixed = FixedPartition::new(samples, size_subsamples, samples_rep, degree).unwrap();
 
-        for (value, expected_value) in fixed.sample_entropy().iter().zip(expected.iter()) {
+        for (value, expected_value) in fixed.naive_entropies().iter().zip(expected.iter()) {
             assert_float_eq!(value, expected_value, abs <= 1e-6);
         }
     }

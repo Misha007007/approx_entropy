@@ -24,7 +24,6 @@ impl<'a> NaiveEstimator<'a> {
     }
 
     pub fn entropy(&self) -> f64 {
-        let support = self.unnorm_distr.len();
         let mut entropy = 0.0;
 
         let all = self.unnorm_distr.iter().sum::<usize>() as f64;

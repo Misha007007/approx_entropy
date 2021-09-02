@@ -79,8 +79,9 @@ where
     let mut vec = Vec::with_capacity(samples_rep.iter().sum());
     for (counter, sample_size) in size_samples.iter().enumerate() {
         for _ in 0..samples_rep[counter] {
-            let naive_entropy_stimation =
-                NaiveEstimator::new(&samples(&variable, *sample_size)).entropy();
+            let naive_entropy_stimation = NaiveEstimator::new(&samples(&variable, *sample_size))
+                .unwrap()
+                .entropy();
             vec.push((*sample_size, naive_entropy_stimation));
         }
     }
