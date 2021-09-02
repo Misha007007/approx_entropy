@@ -13,8 +13,10 @@ const SUPPORT: usize = 1_000;
 
 fn main() -> Result<(), PreexplorerError> {
     let uniform = Uniform::from(0..SUPPORT);
-    let size_samples: Vec<usize> = (4..9).map(|i| 1 << i).collect();
-    let samples_rep: Vec<usize> = (4..9).map(|i| 1 << (8 - i)).collect();
+    let size_samples: Vec<usize> = (5..12).map(|i| 1 << i).collect();
+    let samples_rep: Vec<usize> = (0..size_samples.len())
+        .map(|i| 1 << (size_samples.len() - i))
+        .collect();
 
     // Simulation and estimation
     let naive_data: Vec<(f64, f64)> = sample_naive_entropy(&uniform, &size_samples, &samples_rep)
@@ -29,19 +31,20 @@ fn main() -> Result<(), PreexplorerError> {
 
     // Plot the data
     let (grid, simulation_values): (Vec<f64>, Vec<f64>) = naive_data.into_iter().unzip();
-    let (_, estimation_values): (Vec<f64>, Vec<f64>) = estimator_data.into_iter().unzip();
-    let limit_values = grid.iter().map(|_| (SUPPORT as f64).ln());
-
-    let empirical = (grid.clone(), simulation_values)
+    let empirical = (grid, simulation_values)
         .preexplore()
         .set_title("simulation")
         .set_style("points")
         .to_owned();
+
+    let (grid, estimation_values): (Vec<f64>, Vec<f64>) = estimator_data.into_iter().unzip();
     let estimation = (grid.clone(), estimation_values)
         .preexplore()
         .set_title("estimation")
         .set_style("points")
         .to_owned();
+
+    let limit_values = grid.iter().map(|_| (SUPPORT as f64).ln());
     let limit = (grid.clone(), limit_values)
         .preexplore()
         .set_title("limit")
@@ -106,9 +109,8 @@ where
     let mut vec = Vec::with_capacity(samples_rep.iter().sum());
     for (counter, sample_size) in size_samples.iter().enumerate() {
         for _ in 0..samples_rep[counter] {
-            let naive_entropy_stimation =
-                Estimator::from(samples(&variable, *sample_size)).entropy();
-            vec.push((*sample_size, naive_entropy_stimation));
+            let entropy_stimation = Estimator::from(samples(&variable, *sample_size)).entropy();
+            vec.push((*sample_size, entropy_stimation));
         }
     }
     vec

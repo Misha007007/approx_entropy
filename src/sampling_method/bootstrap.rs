@@ -96,6 +96,19 @@ where
     fn degree(&self) -> usize {
         self.degree
     }
+
+    fn set_degree(&mut self, degree: usize) -> Result<&mut Bootstrap<R>, Self::DegreeError> {
+        if self.num_groups > degree {
+            self.degree = degree;
+            Ok(self)
+        } else {
+            Err(HighDegree)
+        }
+    }
+
+    fn num_groups(&self) -> usize {
+        self.num_groups
+    }
     fn set_num_groups(
         &mut self,
         num_groups: usize,
@@ -105,15 +118,6 @@ where
             Ok(self)
         } else {
             Err(LowNumGroups)
-        }
-    }
-
-    fn set_degree(&mut self, degree: usize) -> Result<&mut Bootstrap<R>, Self::DegreeError> {
-        if self.num_groups > degree {
-            self.degree = degree;
-            Ok(self)
-        } else {
-            Err(HighDegree)
         }
     }
 
@@ -127,12 +131,22 @@ where
         unnorm_distr: &[usize],
     ) -> Result<&mut Self, Self::UnnormDistrError> {
         let available_samples: usize = unnorm_distr.iter().sum();
-        if available_samples >= 1 << self.num_groups {
+        if available_samples >= 1 << self.num_groups() {
             self.unnorm_distr = unnorm_distr.to_vec();
             Ok(self)
         } else {
             Err(TooFewSamples)
         }
+    }
+
+    fn size_subsamples(&self) -> Vec<usize> {
+        let available_samples: usize = self.unnorm_distr.iter().sum();
+        (0..self.num_groups())
+            .map(|i| available_samples >> (i + 1))
+            .collect()
+    }
+    fn samples_rep(&self) -> Vec<usize> {
+        (0..self.num_groups()).map(|i| 1 << i).collect()
     }
 
     fn sample_entropy(&mut self) -> DVector<f64> {
@@ -148,11 +162,11 @@ where
         };
 
         let mut count = 0;
-        for i in 0..self.size_subsamples().len() {
-            let repetitions = self.samples_rep()[i];
-            for _ in 0..repetitions {
+        let samples_rep = self.samples_rep();
+        for (group_index, group_size) in self.size_subsamples().iter().enumerate() {
+            for _ in 0..samples_rep[group_index] {
                 let rand_sample: Vec<usize> = sample_long
-                    .choose_multiple(&mut self.rng, repetitions)
+                    .choose_multiple(&mut self.rng, *group_size)
                     .cloned()
                     .collect();
 
@@ -163,15 +177,6 @@ where
             }
         }
         y
-    }
-    fn size_subsamples(&self) -> Vec<usize> {
-        let available_samples: usize = self.unnorm_distr.iter().sum();
-        (0..self.num_groups)
-            .map(|i| available_samples >> (i + 1))
-            .collect()
-    }
-    fn samples_rep(&self) -> Vec<usize> {
-        (0..self.num_groups).map(|i| 1 << i).collect()
     }
 }
 

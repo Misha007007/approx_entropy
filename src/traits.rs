@@ -9,6 +9,8 @@ pub trait SamplingMethod {
     fn degree(&self) -> usize;
     /// Change the degree of the polynomial used to fit the naive entropy estimations.
     fn set_degree(&mut self, degree: usize) -> Result<&mut Self, Self::DegreeError>;
+    /// Returns the degree of the polynomial used to fit the naive entropy estimations.
+    fn num_groups(&self) -> usize;
     /// Change the number of groups.
     fn set_num_groups(&mut self, num_groups: usize) -> Result<&mut Self, Self::NumGroupsError>;
     /// Change the unnormalized distribution from which subsamples will be taken.
@@ -17,13 +19,11 @@ pub trait SamplingMethod {
         unnorm_distr: &[usize],
     ) -> Result<&mut Self, Self::UnnormDistrError>;
 
-    /// Returns all naive entropy estimations used for fitting a polynomial.
-    fn sample_entropy(&mut self) -> DVector<f64>;
-
     /// Size of the subsamples, for each group.
     ///
     /// The first entry corresponds to the number of subsamples
-    /// used to compute naive entropy. This computation will be repeated
+    /// used to compute naive entropy in the first group.
+    /// This computation will be repeated
     /// a number of times (with different subsamples) given by
     /// the first entry of the output of `samples_rep`.
     ///
@@ -40,12 +40,18 @@ pub trait SamplingMethod {
     fn samples_rep(&self) -> Vec<usize>;
     /// Total number of naive entropy estimation used to fit a polynomial.
     ///
+    /// This is equivalent to `self.samples_rep().iter().sum()`.
+    ///
     /// # Remarks
     ///
     /// This might not correspond to the total number of samples of the underlying distribution.
     fn total_samples(&self) -> usize {
         self.samples_rep().iter().sum()
     }
+
+    /// Returns all naive entropy estimations used for fitting a polynomial.
+    fn sample_entropy(&mut self) -> DVector<f64>;
+
     /// Returns a matrix used for fitting a polynomial to the values computed by `sample_entropy`.
     fn sample_entropy_matrix(&self) -> DMatrix<f64> {
         let size_subsamples = self.size_subsamples();
