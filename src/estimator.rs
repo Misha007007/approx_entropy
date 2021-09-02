@@ -177,6 +177,7 @@ mod tests {
     #[test_case([8]; "one_sample")]
     #[test_case([1, 2, 3, 4, 5, 6]; "[usize; N]")]
     #[test_case(vec!['a', 'b', 'c', 'd', 'd', 'e', 'e', 'e']; "Vec<T>")]
+    #[test_case(Bootstrap::new(&[1, 2, 3, 4, 5, 6], 3, 2, rand::thread_rng()).unwrap(); "bootstrap")]
     fn from<T>(source: T)
     where
         Estimator<Bootstrap<ThreadRng>>: From<T>,

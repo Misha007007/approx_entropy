@@ -182,6 +182,14 @@ mod tests {
     use nalgebra::dmatrix;
 
     #[test]
+    fn new() {
+        let num_groups = 3;
+        let degree = 2;
+        let rng = rand::thread_rng();
+        Bootstrap::new(&[1, 2, 3, 4, 5, 6], num_groups, degree, rng).unwrap();
+    }
+
+    #[test]
     fn size_subsamples() {
         let num_groups = 3;
         let degree = 2;
