@@ -177,7 +177,7 @@ impl SamplingMethod for FixedPartition {
                     .collect();
                 let unnorm_distr = count_dup(&sub_sample);
 
-                y[count] = NaiveEstimator::new(&unnorm_distr).entropy();
+                y[count] = NaiveEstimator::new_unchecked(&unnorm_distr).entropy(); // Never fails because there is no null group_size
                 count += 1;
             }
         }

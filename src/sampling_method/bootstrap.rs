@@ -142,7 +142,7 @@ where
     fn size_subsamples(&self) -> Vec<usize> {
         let available_samples: usize = self.unnorm_distr.iter().sum();
         (0..self.num_groups())
-            .map(|i| available_samples >> (i + 1))
+            .map(|i| available_samples >> (i + 1)) // guaranteed to be at least 1
             .collect()
     }
     fn samples_rep(&self) -> Vec<usize> {
@@ -172,7 +172,9 @@ where
 
                 let unnorm_distr = count_dup(&rand_sample);
 
-                y[count] = NaiveEstimator::new(&unnorm_distr).entropy();
+                y[count] = NaiveEstimator::new_unchecked(&unnorm_distr).entropy();
+                // Never fails because group_size is never null.
+
                 count += 1;
             }
         }

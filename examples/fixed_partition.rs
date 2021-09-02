@@ -117,7 +117,7 @@ where
                     sample_size / 32,
                 ];
                 let samples_rep = [1, 2, 4, 8];
-                let degree = 3;
+                let degree = 0;
                 FixedPartition::new(&samples, &size_subsamples, &samples_rep, degree)
                     .unwrap()
                     .into()
