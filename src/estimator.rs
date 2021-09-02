@@ -42,6 +42,10 @@ where
     M: SamplingMethod,
 {
     /// Constructs a new `Estimator`.
+    ///
+    /// # Remarks
+    ///
+    /// The trait `From<M>` is also implemented for convenience.
     pub fn new(sampling_method: M) -> Self {
         Estimator { sampling_method }
     }
@@ -92,6 +96,15 @@ impl<M> Estimator<M> {
         Estimator {
             sampling_method: other,
         }
+    }
+}
+
+impl<M> From<M> for Estimator<M>
+where
+    M: SamplingMethod,
+{
+    fn from(sampling_method: M) -> Self {
+        Self::new(sampling_method)
     }
 }
 
