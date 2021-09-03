@@ -123,7 +123,7 @@ where
                     .unwrap()
                     .into()
             };
-            let stimation = estimator.entropy();
+            let stimation = estimator.entropy().unwrap();
             vec.push((*sample_size, stimation));
         }
     }

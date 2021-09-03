@@ -30,7 +30,7 @@ fn main() -> Result<(), PreexplorerError> {
 
     // Compute naive entropy estimations that will be extrapolated
     let (sizes, values): (Vec<_>, Vec<_>) = fixed.naive_entropies().into_iter().unzip();
-    println!("Final estimation: {}", Estimator::from(fixed).entropy());
+    println!("Final estimation: {:?}", Estimator::from(fixed).entropy());
     // Plot
     (sizes.iter().map(|s| 1. / *s as f64), values)
         .preexplore()

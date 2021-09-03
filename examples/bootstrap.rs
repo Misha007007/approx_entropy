@@ -110,7 +110,9 @@ where
     let mut vec = Vec::with_capacity(samples_rep.iter().sum());
     for (counter, sample_size) in size_samples.iter().enumerate() {
         for _ in 0..samples_rep[counter] {
-            let entropy_stimation = Estimator::from(samples(&variable, *sample_size)).entropy();
+            let entropy_stimation = Estimator::from(samples(&variable, *sample_size))
+                .entropy()
+                .unwrap();
             vec.push((*sample_size, entropy_stimation));
         }
     }

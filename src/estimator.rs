@@ -1,6 +1,7 @@
 use core::hash::Hash;
 use nalgebra::{DMatrix, DVector};
 use rand::rngs::ThreadRng;
+use thiserror::Error;
 
 use crate::{Bootstrap, SamplingMethod};
 
@@ -22,7 +23,7 @@ const DEFAULT_DEGREE: usize = 2;
 /// # use approx_entropy::Estimator;
 /// let unnorm_distr = [1, 2, 3, 4, 5, 6];
 /// let mut estimator = Estimator::from(unnorm_distr);
-/// println!("Entropy estimation: {}", estimator.entropy()); // Random result
+/// println!("Entropy estimation: {:?}", estimator.entropy()); // Random result
 /// ```
 ///
 /// Quick estimation from a sample.
@@ -30,12 +31,16 @@ const DEFAULT_DEGREE: usize = 2;
 /// # use approx_entropy::Estimator;
 /// let samples = vec![1, 2, 3, 1, 1, 2, 2, 1, 3]; // samples from a random variable
 /// let mut estimator = Estimator::from(samples);
-/// println!("Entropy estimation: {}", estimator.entropy()); // Random result
+/// println!("Entropy estimation: {:?}", estimator.entropy()); // Random result
 /// ```
 #[derive(Debug, PartialEq)]
 pub struct Estimator<M> {
     sampling_method: M,
 }
+
+#[derive(Error, Debug)]
+#[error("Failed to estimate entropy because of numerical instability.")]
+pub struct FittingError;
 
 /// # Basic methods
 impl<M> Estimator<M>
@@ -56,7 +61,7 @@ where
     /// # Errors
     ///
     /// If there are numerical instabilities.
-    pub fn entropy(&mut self) -> f64 {
+    pub fn entropy(&mut self) -> Result<f64, FittingError> {
         let (size_subsamples_dup, naive_entropies): (Vec<_>, Vec<_>) =
             self.sampling_method.naive_entropies().into_iter().unzip();
 
@@ -73,7 +78,10 @@ where
         let b = x_t.clone() * y;
         let a = x_t * x;
 
-        a.lu().solve(&b).unwrap()[0] // Never fails since we know the matrix is invertible
+        match a.lu().solve(&b) {
+            Some(polynomial) => Ok(polynomial[0]),
+            None => Err(FittingError),
+        }
     }
 }
 

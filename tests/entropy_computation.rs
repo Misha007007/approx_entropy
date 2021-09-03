@@ -15,7 +15,7 @@ where
     let bootstrap = Bootstrap::new(&[1, 2, 3, 4, 5, 6], num_groups, degree, rng).unwrap();
     let mut estimator = Estimator::from(source).set_sampling_method(bootstrap);
 
-    assert_float_eq!(estimator.entropy(), expected, abs <= 1e-6);
+    assert_float_eq!(estimator.entropy().unwrap(), expected, abs <= 1e-6);
 }
 
 fn rng(seed: u64) -> impl rand::RngCore {
