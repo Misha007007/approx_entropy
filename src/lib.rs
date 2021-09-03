@@ -1,4 +1,16 @@
 //! Approximate the entropy of a distribution from few samples.
+//!
+//!
+//!
+//! # Examples
+//!
+//! Quick estimation from an unormalized distribution.
+//! ```
+//! # use approx_entropy::Estimator;
+//! let unnorm_distr = [1, 2, 3, 4, 5, 6];
+//! let mut estimator = Estimator::from(unnorm_distr);
+//! println!("Entropy estimation: {:?}", estimator.entropy()); // Random result
+//! ```
 
 mod estimator;
 mod sampling_method;
