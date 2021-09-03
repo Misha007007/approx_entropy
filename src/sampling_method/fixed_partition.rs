@@ -119,12 +119,12 @@ pub struct TooHighDegree;
 
 #[derive(Error, Debug)]
 #[error("Invalid unnormalized distribution: the total number of samples is too low.")]
-pub struct Unmutable;
+pub struct Immutable;
 
 impl SamplingMethod for FixedPartition {
     type DegreeError = TooHighDegree;
-    type NumGroupsError = Unmutable;
-    type UnnormDistrError = Unmutable;
+    type NumGroupsError = Immutable;
+    type UnnormDistrError = Immutable;
 
     fn degree(&self) -> usize {
         self.degree
@@ -145,7 +145,7 @@ impl SamplingMethod for FixedPartition {
 
     /// Always errors.
     fn set_num_groups(&mut self, _num_groups: usize) -> Result<&mut Self, Self::NumGroupsError> {
-        Err(Unmutable)
+        Err(Immutable)
     }
 
     /// Always errors.
@@ -153,7 +153,7 @@ impl SamplingMethod for FixedPartition {
         &mut self,
         _unnorm_distr: &[usize],
     ) -> Result<&mut Self, Self::UnnormDistrError> {
-        Err(Unmutable)
+        Err(Immutable)
     }
 
     fn size_subsamples(&self) -> Vec<usize> {
