@@ -9,6 +9,7 @@ edition = "2018"
 rand = "0.8.4"
 nalgebra = "0.29.0"
 thiserror = "1.0.28"
+polyfit-rs = "0.2.0"
 
 [dev-dependencies]
 test-case = "1.2.0"

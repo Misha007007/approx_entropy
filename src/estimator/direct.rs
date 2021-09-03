@@ -1,42 +1,42 @@
 use core::hash::Hash;
-use nalgebra::{DMatrix, DVector};
+use polyfit_rs::polyfit_rs::polyfit;
 use rand::rngs::ThreadRng;
 use thiserror::Error;
 
 use crate::{Bootstrap, SamplingMethod};
 
-mod direct;
-mod naive;
-
-pub use direct::DirectEstimator;
-pub use naive::NaiveEstimator;
-
 const DEFAULT_NUM_GROUPS: usize = 3;
 const DEFAULT_DEGREE: usize = 2;
 
-/// Entropy estimator
+/// Direct entropy estimator.
 ///
-/// This is a wrapper around a concrete sampling method.
+/// Introduced by Strong et. al.[^1], it extrapolates naive entropy computations
+/// of small sample size by fitting a polynomial.
+///
+/// This is a wrapper around a concrete sampling method,
+/// extending the original paper.
 ///
 /// # Examples
 ///
 /// Quick estimation from an unormalized distribution.
 /// ```
-/// # use approx_entropy::Estimator;
+/// # use approx_entropy::DirectEstimator;
 /// let unnorm_distr = [1, 2, 3, 4, 5, 6];
-/// let mut estimator = Estimator::from(unnorm_distr);
+/// let mut estimator = DirectEstimator::from(unnorm_distr);
 /// println!("Entropy estimation: {:?}", estimator.entropy()); // Random result
 /// ```
 ///
 /// Quick estimation from a sample.
 /// ```
-/// # use approx_entropy::Estimator;
+/// # use approx_entropy::DirectEstimator;
 /// let samples = vec![1, 2, 3, 1, 1, 2, 2, 1, 3]; // samples from a random variable
-/// let mut estimator = Estimator::from(samples);
+/// let mut estimator = DirectEstimator::from(samples);
 /// println!("Entropy estimation: {:?}", estimator.entropy()); // Random result
 /// ```
+///
+/// [^1]: https://doi.org/10.1103/PhysRevLett.80.197
 #[derive(Debug, PartialEq)]
-pub struct Estimator<M> {
+pub struct DirectEstimator<M> {
     sampling_method: M,
 }
 
@@ -45,17 +45,17 @@ pub struct Estimator<M> {
 pub struct FittingError;
 
 /// # Basic methods
-impl<M> Estimator<M>
+impl<M> DirectEstimator<M>
 where
     M: SamplingMethod,
 {
-    /// Constructs a new `Estimator`.
+    /// Constructs a new `DirectEstimator`.
     ///
     /// # Remarks
     ///
     /// The trait `From<M>` is also implemented for convenience.
     pub fn new(sampling_method: M) -> Self {
-        Estimator { sampling_method }
+        DirectEstimator { sampling_method }
     }
     /// Estimates the entropy of the underlying distribution,
     /// known only through the empirical unnormalized distribution.
@@ -64,29 +64,21 @@ where
     ///
     /// If there are numerical instabilities.
     pub fn entropy(&mut self) -> Result<f64, FittingError> {
-        let (size_subsamples_dup, scaled_naive_entropies): (Vec<_>, Vec<_>) = self
+        let (inverse_size_subsamples_dup, naive_entropy_values): (Vec<_>, Vec<_>) = self
             .sampling_method
             .naive_entropies()
             .into_iter()
-            .map(|(size, value)| (size, value * size as f64))
+            .map(|(size, value)| ((1. / size as f64), value))
             .unzip();
 
         // Fitting a polynomial
-        let y = DVector::from_vec(scaled_naive_entropies);
-        let x = DMatrix::<f64>::from_fn(
-            self.sampling_method.total_samples(),
-            self.sampling_method.degree() + 1,
-            |r, c| (size_subsamples_dup[r] as f64).powi(1 - c as i32),
-        );
-
-        // Least squares for `x ? = y`
-        let x_t = x.transpose();
-        let b = x_t.clone() * y;
-        let a = x_t * x;
-
-        match a.lu().solve(&b) {
-            Some(polynomial) => Ok(polynomial[0]),
-            None => Err(FittingError),
+        match polyfit(
+            &inverse_size_subsamples_dup,
+            &naive_entropy_values,
+            self.sampling_method().degree(),
+        ) {
+            Ok(coefficients) => Ok(coefficients[0]),
+            Err(_) => Err(FittingError),
         }
     }
 }
@@ -94,7 +86,7 @@ where
 /// # Getters
 ///
 /// Get the underlying sampling method.
-impl<M> Estimator<M>
+impl<M> DirectEstimator<M>
 where
     M: SamplingMethod,
 {
@@ -110,18 +102,18 @@ where
 }
 
 /// # Transformations
-impl<M> Estimator<M> {
-    pub fn set_sampling_method<M2>(self, other: M2) -> Estimator<M2>
+impl<M> DirectEstimator<M> {
+    pub fn set_sampling_method<M2>(self, other: M2) -> DirectEstimator<M2>
     where
         M2: SamplingMethod,
     {
-        Estimator {
+        DirectEstimator {
             sampling_method: other,
         }
     }
 }
 
-impl<M> From<M> for Estimator<M>
+impl<M> From<M> for DirectEstimator<M>
 where
     M: SamplingMethod,
 {
@@ -130,12 +122,12 @@ where
     }
 }
 
-impl<const N: usize> From<[usize; N]> for Estimator<Bootstrap<ThreadRng>> {
+impl<const N: usize> From<[usize; N]> for DirectEstimator<Bootstrap<ThreadRng>> {
     /// Performs the conversion from an unnormalized distribution.
     ///
     /// # Remarks
     ///
-    /// This gives an easy entry point for using `Estimator`,
+    /// This gives an easy entry point for using `DirectEstimator`,
     /// but be aware that default values are given to tunable parameters.
     fn from(unnorm_distr: [usize; N]) -> Self {
         let sampling_method = Bootstrap::new(
@@ -145,11 +137,11 @@ impl<const N: usize> From<[usize; N]> for Estimator<Bootstrap<ThreadRng>> {
             rand::thread_rng(),
         )
         .unwrap();
-        Estimator::new(sampling_method)
+        DirectEstimator::new(sampling_method)
     }
 }
 
-impl<T> From<&[T]> for Estimator<Bootstrap<ThreadRng>>
+impl<T> From<&[T]> for DirectEstimator<Bootstrap<ThreadRng>>
 where
     T: Hash + Eq + Clone,
 {
@@ -159,7 +151,7 @@ where
     ///
     /// # Remarks
     ///
-    /// This gives an easy entry point for using `Estimator`,
+    /// This gives an easy entry point for using `DirectEstimator`,
     /// but be aware that default values are given to tunable parameters.
     fn from(samples: &[T]) -> Self {
         let unnorm_distr = crate::count_dup(&samples);
@@ -170,11 +162,11 @@ where
             rand::thread_rng(),
         )
         .unwrap();
-        Estimator::new(sampling_method)
+        DirectEstimator::new(sampling_method)
     }
 }
 
-impl<T> From<Vec<T>> for Estimator<Bootstrap<ThreadRng>>
+impl<T> From<Vec<T>> for DirectEstimator<Bootstrap<ThreadRng>>
 where
     T: Hash + Eq + Clone,
 {
@@ -184,10 +176,10 @@ where
     ///
     /// # Remarks
     ///
-    /// This gives an easy entry point for using `Estimator`,
+    /// This gives an easy entry point for using `DirectEstimator`,
     /// but be aware that default values are given to tunable parameters.
     fn from(samples: Vec<T>) -> Self {
-        <Estimator<Bootstrap<ThreadRng>> as From<&[T]>>::from(&samples)
+        <DirectEstimator<Bootstrap<ThreadRng>> as From<&[T]>>::from(&samples)
     }
 }
 
@@ -202,8 +194,8 @@ mod tests {
     #[test_case(Bootstrap::new(&[1, 2, 3, 4, 5, 6], 3, 2, rand::thread_rng()).unwrap(); "bootstrap")]
     fn from<T>(source: T)
     where
-        Estimator<Bootstrap<ThreadRng>>: From<T>,
+        DirectEstimator<Bootstrap<ThreadRng>>: From<T>,
     {
-        Estimator::from(source);
+        DirectEstimator::from(source);
     }
 }

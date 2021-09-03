@@ -1,5 +1,9 @@
 use thiserror::Error;
 
+/// Naive entropy estimator.
+///
+/// It assumes the empirical distribution is almost the real distribution,
+/// which is asymptotically true.
 #[derive(Debug)]
 pub struct NaiveEstimator<'a> {
     unnorm_distr: &'a [usize],

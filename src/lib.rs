@@ -5,7 +5,7 @@ mod sampling_method;
 mod traits;
 mod utils;
 
-pub use estimator::{Estimator, NaiveEstimator};
+pub use estimator::{DirectEstimator, Estimator, NaiveEstimator};
 pub use sampling_method::{Bootstrap, Coherent, FixedPartition};
 pub use traits::SamplingMethod;
 pub use utils::count_dup;
