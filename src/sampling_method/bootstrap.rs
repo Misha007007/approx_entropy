@@ -145,7 +145,9 @@ where
             .collect()
     }
     fn samples_rep(&self) -> Vec<usize> {
-        (0..self.num_groups()).map(|i| 1 << i * i).collect()
+        (0..self.num_groups())
+            .map(|i| 4_usize.pow(i as u32))
+            .collect()
     }
 
     fn naive_entropies(&mut self) -> Vec<(usize, f64)> {
@@ -197,7 +199,7 @@ mod tests {
         let rng = rand::thread_rng();
         let bootstrap = Bootstrap::new(&[1, 2, 3, 4, 5, 6], num_groups, degree, rng).unwrap();
 
-        assert_eq!(vec![10, 5, 2], bootstrap.size_subsamples());
+        assert_eq!(vec![21, 10, 5], bootstrap.size_subsamples());
     }
 
     #[test]
@@ -207,7 +209,7 @@ mod tests {
         let rng = rand::thread_rng();
         let bootstrap = Bootstrap::new(&[1, 2, 3, 4, 5, 6], num_groups, degree, rng).unwrap();
 
-        assert_eq!(vec![1, 2, 4], bootstrap.samples_rep());
+        assert_eq!(vec![1, 4, 16], bootstrap.samples_rep());
     }
 
     #[test]
@@ -217,6 +219,6 @@ mod tests {
         let rng = rand::thread_rng();
         let bootstrap = Bootstrap::new(&[1, 2, 3, 4, 5, 6], num_groups, degree, rng).unwrap();
 
-        assert_eq!(7, bootstrap.total_samples());
+        assert_eq!(21, bootstrap.total_samples());
     }
 }

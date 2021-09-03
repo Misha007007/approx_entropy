@@ -211,8 +211,8 @@ mod tests {
     }
 
     /// Value stability of implementation
-    #[test_case([1, 2, 3, 4, 5, 6], 2.337315019221; "increasing")]
-    #[test_case(vec!['a', 'b', 'c', 'd', 'd', 'e', 'e', 'e'], 2.337315019221; "letters")]
+    #[test_case([1, 2, 3, 4, 5, 6], 1.9511041580553; "increasing")]
+    #[test_case(vec!['a', 'b', 'c', 'd', 'd', 'e', 'e', 'e'], 1.9511041580553; "letters")]
     fn entropy<T>(source: T, expected: f64)
     where
         Estimator<Bootstrap<ThreadRng>>: From<T>,
