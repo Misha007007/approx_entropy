@@ -4,7 +4,7 @@
 //!
 //! Needs `gnuplot` installed.
 
-use approx_entropy::{FixedPartition, SamplingMethod};
+use approx_entropy::{Estimator, FixedPartition, SamplingMethod};
 use preexplorer::errors::PreexplorerError;
 use preexplorer::prelude::*;
 use rand::distributions::{Distribution, Uniform};
@@ -29,47 +29,16 @@ fn main() -> Result<(), PreexplorerError> {
     let mut fixed = FixedPartition::new(&samples, &size_subsamples, &samples_rep, degree).unwrap();
 
     // Compute naive entropy estimations that will be extrapolated
-    let naive_entropies = fixed.naive_entropies();
-
+    let (sizes, values): (Vec<_>, Vec<_>) = fixed.naive_entropies().into_iter().unzip();
+    println!("Final estimation: {}", Estimator::from(fixed).entropy());
     // Plot
-    todo!()
+    (sizes.iter().map(|s| 1. / *s as f64), values)
+        .preexplore()
+        .set_title("Naive entropy subsamples used by FixedPartition")
+        .set_xlabel("1/n")
+        .set_ylabel("entropy estimation")
+        .set_style("points")
+        .plot("fixed_partition")?;
 
-    // // Simulation and estimation
-    // let naive_data: Vec<(f64, f64)> = sample_naive_entropy(&uniform, &size_samples, &samples_rep)
-    //     .into_iter()
-    //     .map(|(n, value)| ((1. / n as f64), value))
-    //     .collect();
-    // let estimator_data: Vec<(f64, f64)> =
-    //     sample_estimator_entropy(&uniform, &size_samples, &samples_rep)
-    //         .into_iter()
-    //         .map(|(n, value)| ((1. / n as f64), value))
-    //         .collect();
-
-    // // Plot the data
-    // let (grid, simulation_values): (Vec<f64>, Vec<f64>) = naive_data.into_iter().unzip();
-    // let (_, estimation_values): (Vec<f64>, Vec<f64>) = estimator_data.into_iter().unzip();
-    // let limit_values = grid.iter().map(|_| (SUPPORT as f64).ln());
-
-    // let empirical = (grid.clone(), simulation_values)
-    //     .preexplore()
-    //     .set_title("simulation")
-    //     .set_style("points")
-    //     .to_owned();
-    // let estimation = (grid.clone(), estimation_values)
-    //     .preexplore()
-    //     .set_title("estimation")
-    //     .set_style("points")
-    //     .to_owned();
-    // let limit = (grid.clone(), limit_values)
-    //     .preexplore()
-    //     .set_title("limit")
-    //     .to_owned();
-
-    // (empirical + estimation + limit)
-    //     .set_title("Asymptotic behaviour of the naive entropy estimator")
-    //     .set_logx(2)
-    //     .set_xlabel("log(1/n)")
-    //     .set_ylabel("entropy estimation")
-    //     .plot("uniform")?;
-    // Ok(())
+    Ok(())
 }
