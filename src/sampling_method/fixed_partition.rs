@@ -2,7 +2,7 @@ use thiserror::Error;
 
 use crate::{traits::SamplingMethod, utils::count_dup, NaiveEstimator};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct FixedPartition {
     samples: Vec<usize>,
     size_subsamples: Vec<usize>,

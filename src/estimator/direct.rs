@@ -186,7 +186,10 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use float_eq::assert_float_eq;
     use test_case::test_case;
+
+    use crate::test::rng;
 
     #[test_case([8]; "one_sample")]
     #[test_case([1, 2, 3, 4, 5, 6]; "[usize; N]")]
@@ -197,5 +200,21 @@ mod tests {
         DirectEstimator<Bootstrap<ThreadRng>>: From<T>,
     {
         DirectEstimator::from(source);
+    }
+
+    /// Value stability of implementation
+    #[test_case([1, 2, 3, 4, 5, 6], 2.337315019221; "increasing")]
+    #[test_case(vec!['a', 'b', 'c', 'd', 'd', 'e', 'e', 'e'], 2.337315019221; "letters")]
+    fn entropy<T>(source: T, expected: f64)
+    where
+        DirectEstimator<Bootstrap<ThreadRng>>: From<T>,
+    {
+        let num_groups = 3;
+        let degree = 2;
+        let rng = rng(1);
+        let bootstrap = Bootstrap::new(&[1, 2, 3, 4, 5, 6], num_groups, degree, rng).unwrap();
+        let mut estimator = DirectEstimator::from(source).set_sampling_method(bootstrap);
+
+        assert_float_eq!(estimator.entropy().unwrap(), expected, abs <= 1e-6);
     }
 }

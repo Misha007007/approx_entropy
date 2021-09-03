@@ -3,7 +3,7 @@ use thiserror::Error;
 
 use crate::{traits::SamplingMethod, utils::count_dup, NaiveEstimator};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Bootstrap<R> {
     num_groups: usize,
     degree: usize,

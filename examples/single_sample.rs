@@ -4,7 +4,7 @@
 //!
 //! Needs `gnuplot` installed.
 
-use approx_entropy::{Estimator, FixedPartition, SamplingMethod};
+use approx_entropy::{DirectEstimator, Estimator, FixedPartition, SamplingMethod};
 use preexplorer::errors::PreexplorerError;
 use preexplorer::prelude::*;
 use rand::distributions::{Distribution, Uniform};
@@ -30,7 +30,14 @@ fn main() -> Result<(), PreexplorerError> {
 
     // Compute naive entropy estimations that will be extrapolated
     let (sizes, values): (Vec<_>, Vec<_>) = fixed.naive_entropies().into_iter().unzip();
-    println!("Final estimation: {:?}", Estimator::from(fixed).entropy());
+    println!(
+        "Final estimation: {:?}",
+        Estimator::from(fixed.clone()).entropy()
+    );
+    println!(
+        "Final direct estimation: {:?}",
+        DirectEstimator::from(fixed).entropy()
+    );
     // Plot
     (sizes.iter().map(|s| 1. / *s as f64), values)
         .preexplore()
