@@ -1,4 +1,3 @@
-use nalgebra::DVector;
 use thiserror::Error;
 
 use crate::{traits::SamplingMethod, utils::count_dup, NaiveEstimator};
@@ -164,24 +163,24 @@ impl SamplingMethod for FixedPartition {
         self.samples_rep.clone()
     }
 
-    fn naive_entropies(&mut self) -> DVector<f64> {
-        let mut y = DVector::<f64>::from_element(self.total_samples(), 0.0);
+    fn naive_entropies(&mut self) -> Vec<(usize, f64)> {
+        let mut naive_entropies = Vec::with_capacity(self.total_samples());
         let mut sample_long = self.samples.clone();
 
-        let mut count = 0;
         for (group_index, group_size) in self.size_subsamples().iter().enumerate() {
             let repetitions = self.samples_rep()[group_index];
             for _ in 0..repetitions {
                 let sub_sample: Vec<usize> = (0..*group_size)
-                    .map(|_| sample_long.pop().unwrap()) // Naver fails by construction conditions of FixedPartition
+                    .map(|_| sample_long.pop().unwrap()) // Never fails by construction conditions of FixedPartition
                     .collect();
                 let unnorm_distr = count_dup(&sub_sample);
+                let naive_entropy_value = NaiveEstimator::new_unchecked(&unnorm_distr).entropy();
+                // Never fails because there is no null group_size
 
-                y[count] = NaiveEstimator::new_unchecked(&unnorm_distr).entropy(); // Never fails because there is no null group_size
-                count += 1;
+                naive_entropies.push((*group_size, naive_entropy_value));
             }
         }
-        y
+        naive_entropies
     }
 }
 
@@ -189,7 +188,6 @@ impl SamplingMethod for FixedPartition {
 mod tests {
     use super::*;
     use float_eq::assert_float_eq;
-    use nalgebra::{dmatrix, dvector};
     use test_case::test_case;
 
     #[test]
@@ -235,39 +233,38 @@ mod tests {
     }
 
     // All naive entropy estimations are zero in this case.
-    #[test_case(&[0, 0, 0, 1, 1, 1, 1, 2, 2, 2], &[3, 2, 1], &[1, 2, 3], 2, dvector![0., 0., 0., 0., 0., 0.]; "all_zeros")]
+    #[test_case(
+        &[0, 0, 0, 1, 1, 1, 1, 2, 2, 2],  //
+        &[3, 2, 1], //
+        &[1, 2, 3], //
+        2, //
+        vec![(3, 0.), (2, 0.), (2, 0.), (1, 0.), (1, 0.), (1, 0.)]; //
+        "all_zeros"
+    )]
     // All naive entropy estimations are ln(2) in this case.
-    #[test_case(&[0, 1, 0, 1, 0, 0, 1, 1], &[4, 2], &[1, 2], 1, dvector![2.0_f64.ln(), 2.0_f64.ln(), 2.0_f64.ln()]; "all_halves")]
-    fn sample_entropy(
+    #[test_case(
+        &[0, 1, 0, 1, 0, 0, 1, 1], // 
+        &[4, 2], //
+        &[1, 2], //
+        1, //
+        vec![(4, 2.0_f64.ln()), (2, 2.0_f64.ln()), (2, 2.0_f64.ln())]; //
+        "all_halves"
+    )]
+    fn naive_entropies(
         samples: &[usize],
         size_subsamples: &[usize],
         samples_rep: &[usize],
         degree: usize,
-        expected: DVector<f64>,
+        expected: Vec<(usize, f64)>,
     ) {
         let mut fixed = FixedPartition::new(samples, size_subsamples, samples_rep, degree).unwrap();
 
         for (value, expected_value) in fixed.naive_entropies().iter().zip(expected.iter()) {
-            assert_float_eq!(value, expected_value, abs <= 1e-6);
-        }
-    }
+            let (size, naive_entropy_value) = value;
+            let (expected_size, expected_value) = expected_value;
 
-    #[test]
-    fn sample_entropy_matrix() {
-        let samples = [0, 0, 0, 1, 1, 2];
-        let size_subsamples = [3, 2, 1];
-        let samples_rep = [1, 1, 1];
-        let degree = 2;
-        let fixed = FixedPartition::new(&samples, &size_subsamples, &samples_rep, degree).unwrap();
-
-        let expected = dmatrix![
-            3.0, 1.0, 1. / 3.;
-            2.0, 1.0, 0.5;
-            1.0, 1.0, 1.0;
-        ];
-
-        for (value, expected_value) in fixed.sample_entropy_matrix().iter().zip(expected.iter()) {
-            assert_float_eq!(value, expected_value, abs <= 1e-6);
+            assert_eq!(size, expected_size);
+            assert_float_eq!(naive_entropy_value, expected_value, abs <= 1e-6);
         }
     }
 }

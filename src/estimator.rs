@@ -1,4 +1,5 @@
 use core::hash::Hash;
+use nalgebra::{DMatrix, DVector};
 use rand::rngs::ThreadRng;
 
 use crate::{Bootstrap, SamplingMethod};
@@ -56,9 +57,16 @@ where
     ///
     /// If there are numerical instabilities.
     pub fn entropy(&mut self) -> f64 {
-        let y = self.sampling_method.naive_entropies();
+        let (size_subsamples_dup, naive_entropies): (Vec<_>, Vec<_>) =
+            self.sampling_method.naive_entropies().into_iter().unzip();
 
-        let x = self.sampling_method.sample_entropy_matrix();
+        // Least squares for `x ? = b`
+        let y = DVector::from_vec(naive_entropies);
+        let x = DMatrix::<f64>::from_fn(
+            self.sampling_method.total_samples(),
+            self.sampling_method.degree() + 1,
+            |r, c| (size_subsamples_dup[r] as f64).powi(1 - c as i32),
+        );
 
         // Least squares for `x ? = b`
         let x_t = x.transpose();

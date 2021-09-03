@@ -1,4 +1,3 @@
-use nalgebra::DVector;
 use rand::{seq::SliceRandom, Rng};
 use thiserror::Error;
 
@@ -149,8 +148,8 @@ where
         (0..self.num_groups()).map(|i| 1 << i).collect()
     }
 
-    fn naive_entropies(&mut self) -> DVector<f64> {
-        let mut y = DVector::<f64>::from_element(self.total_samples(), 0.0);
+    fn naive_entropies(&mut self) -> Vec<(usize, f64)> {
+        let mut naive_entropies = Vec::with_capacity(self.total_samples());
         let sample_long = {
             let mut vec = Vec::<usize>::new();
             for j in 0..self.unnorm_distr.len() {
@@ -161,7 +160,6 @@ where
             vec
         };
 
-        let mut count = 0;
         let samples_rep = self.samples_rep();
         for (group_index, group_size) in self.size_subsamples().iter().enumerate() {
             for _ in 0..samples_rep[group_index] {
@@ -171,22 +169,18 @@ where
                     .collect();
 
                 let unnorm_distr = count_dup(&rand_sample);
-
-                y[count] = NaiveEstimator::new_unchecked(&unnorm_distr).entropy();
+                let naive_entropy_value = NaiveEstimator::new_unchecked(&unnorm_distr).entropy();
                 // Never fails because group_size is never null.
-
-                count += 1;
+                naive_entropies.push((*group_size, naive_entropy_value));
             }
         }
-        y
+        naive_entropies
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use float_eq::assert_float_eq;
-    use nalgebra::dmatrix;
 
     #[test]
     fn new() {
@@ -224,31 +218,5 @@ mod tests {
         let bootstrap = Bootstrap::new(&[1, 2, 3, 4, 5, 6], num_groups, degree, rng).unwrap();
 
         assert_eq!(7, bootstrap.total_samples());
-    }
-
-    #[test]
-    fn sample_entropy_matrix() {
-        let num_groups = 3;
-        let degree = 2;
-        let rng = rand::thread_rng();
-        let bootstrap = Bootstrap::new(&[1, 2, 3, 4, 5, 6], num_groups, degree, rng).unwrap();
-
-        let expected = dmatrix![
-            10.0, 1.0, 0.1;
-            5.0, 1.0, 0.2;
-            5.0, 1.0, 0.2;
-            2.0, 1.0, 0.5;
-            2.0, 1.0, 0.5;
-            2.0, 1.0, 0.5;
-            2.0, 1.0, 0.5
-        ];
-
-        for (value, expected_value) in bootstrap
-            .sample_entropy_matrix()
-            .iter()
-            .zip(expected.iter())
-        {
-            assert_float_eq!(value, expected_value, abs <= 1e-6);
-        }
     }
 }

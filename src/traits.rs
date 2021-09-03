@@ -1,4 +1,3 @@
-use nalgebra::{DMatrix, DVector};
 use std::error::Error;
 
 pub trait SamplingMethod {
@@ -39,18 +38,6 @@ pub trait SamplingMethod {
     /// entry of the output of `size_subsamples`.
     fn samples_rep(&self) -> Vec<usize>;
 
-    /// Size of the subsamples, with repetitions according to `samples_rep`.
-    fn size_subsamples_dup(&self) -> Vec<usize> {
-        let mut vec = Vec::with_capacity(self.samples_rep().into_iter().sum());
-        let samples_rep = self.samples_rep();
-        for (counter, size) in self.size_subsamples().into_iter().enumerate() {
-            for _ in 0..samples_rep[counter] {
-                vec.push(size);
-            }
-        }
-        vec
-    }
-
     /// Total number of naive entropy estimation used to fit a polynomial.
     ///
     /// This is equivalent to `self.samples_rep().iter().sum()`.
@@ -62,19 +49,8 @@ pub trait SamplingMethod {
         self.samples_rep().iter().sum()
     }
 
-    /// Returns all naive entropy estimations used for fitting a polynomial.
-    ///
-    /// This method is tightly related to `size_subsamples_dup`.
-    /// Each coordinate of the output should correspond to a naive entropy estimation
-    /// of a sample of size given by the same coordinate
-    /// of the output vector in `size_subsamples_dup`.
-    fn naive_entropies(&mut self) -> DVector<f64>;
-
-    /// Returns a matrix used for fitting a polynomial to the values computed by `sample_entropy`.
-    fn sample_entropy_matrix(&self) -> DMatrix<f64> {
-        let size_subsamples_dup = self.size_subsamples_dup();
-        DMatrix::<f64>::from_fn(self.total_samples(), self.degree() + 1, |r, c| {
-            (size_subsamples_dup[r] as f64).powi(1 - c as i32)
-        })
-    }
+    /// Returns all naive entropy estimations used for fitting a polynomial,
+    /// as pairs `(size, value)`, where `size` is the size of the subsample used
+    /// and `value` the corresponding naive entropy value.
+    fn naive_entropies(&mut self) -> Vec<(usize, f64)>;
 }
