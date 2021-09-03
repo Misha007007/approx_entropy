@@ -9,11 +9,11 @@ use preexplorer::errors::PreexplorerError;
 use preexplorer::prelude::*;
 use rand::distributions::{Distribution, Uniform};
 
-const SUPPORT: usize = 1_000;
+const SUPPORT: usize = 1 << 12;
 
 fn main() -> Result<(), PreexplorerError> {
     let uniform = Uniform::from(0..SUPPORT);
-    let size_samples: Vec<usize> = (5..12).map(|i| 1 << i).collect();
+    let size_samples: Vec<usize> = (4..12).map(|i| 1 << i).collect();
     let samples_rep: Vec<usize> = (0..size_samples.len())
         .map(|i| 1 << (size_samples.len() - i))
         .collect();

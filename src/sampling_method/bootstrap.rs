@@ -141,11 +141,11 @@ where
     fn size_subsamples(&self) -> Vec<usize> {
         let available_samples: usize = self.unnorm_distr.iter().sum();
         (0..self.num_groups())
-            .map(|i| available_samples >> (i + 1)) // guaranteed to be at least 1
+            .map(|i| available_samples >> i) // guaranteed to be at least 1
             .collect()
     }
     fn samples_rep(&self) -> Vec<usize> {
-        (0..self.num_groups()).map(|i| 1 << i).collect()
+        (0..self.num_groups()).map(|i| 1 << i * i).collect()
     }
 
     fn naive_entropies(&mut self) -> Vec<(usize, f64)> {

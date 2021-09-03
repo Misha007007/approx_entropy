@@ -4,13 +4,15 @@
 //!
 //! Needs `gnuplot` installed.
 
-use approx_entropy::{DirectEstimator, Estimator, FixedPartition, SamplingMethod};
+use approx_entropy::{
+    count_dup, DirectEstimator, Estimator, FixedPartition, NaiveEstimator, SamplingMethod,
+};
 use preexplorer::errors::PreexplorerError;
 use preexplorer::prelude::*;
 use rand::distributions::{Distribution, Uniform};
 
-const SUPPORT: usize = 100;
-const SAMPLE_SIZE: usize = 1_000_000;
+const SUPPORT: usize = 1 << 12;
+const SAMPLE_SIZE: usize = 1 << 6;
 
 fn main() -> Result<(), PreexplorerError> {
     // Construct fixed partition from sample
@@ -18,13 +20,8 @@ fn main() -> Result<(), PreexplorerError> {
         .sample_iter(rand::thread_rng())
         .take(SAMPLE_SIZE)
         .collect();
-    let size_subsamples = [
-        SAMPLE_SIZE / 4,
-        SAMPLE_SIZE / 8,
-        SAMPLE_SIZE / 16,
-        SAMPLE_SIZE / 32,
-    ];
-    let samples_rep = [1, 2, 4, 8];
+    let size_subsamples = [SAMPLE_SIZE / 2, SAMPLE_SIZE / 4, SAMPLE_SIZE / 8];
+    let samples_rep = [1, 1, 2];
     let degree = 2;
     let mut fixed = FixedPartition::new(&samples, &size_subsamples, &samples_rep, degree).unwrap();
 
@@ -38,6 +35,11 @@ fn main() -> Result<(), PreexplorerError> {
         "Final direct estimation: {:?}",
         DirectEstimator::from(fixed).entropy()
     );
+    println!(
+        "Naive entropy: {:?}",
+        NaiveEstimator::new(&count_dup(&samples)).unwrap().entropy()
+    );
+    println!("Real: {}", (SUPPORT as f64).ln());
     // Plot
     (sizes.iter().map(|s| 1. / *s as f64), values)
         .preexplore()
