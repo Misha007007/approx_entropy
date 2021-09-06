@@ -1,3 +1,4 @@
+use rand::{seq::SliceRandom, Rng};
 use thiserror::Error;
 
 use crate::{traits::SamplingMethod, utils::count_dup, NaiveEstimator};
@@ -110,6 +111,15 @@ impl FixedPartition {
             samples_rep: samples_rep.to_vec(),
             degree,
         }
+    }
+
+    /// Shuffle the sample in place.
+    ///
+    /// Useful to generate a different entropy estimation
+    /// which is just as valid as any other.
+    pub fn shuffle<R: Rng + ?Sized>(&mut self, rng: &mut R) -> &mut Self {
+        self.samples.shuffle(rng);
+        self
     }
 }
 
